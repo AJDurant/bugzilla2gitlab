@@ -63,3 +63,8 @@ target/
 # virtualenv
 venv/
 ENV/
+
+# Other
+.idea
+config/
+buglist.txt

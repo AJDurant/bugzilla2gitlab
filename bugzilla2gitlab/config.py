@@ -8,11 +8,12 @@ from .utils import _perform_request
 Config = namedtuple('Config', ["gitlab_base_url", "gitlab_project_id",
                                "bugzilla_base_url", "bugzilla_user", "bugzilla_auto_reporter",
                                "bugzilla_closed_states", "default_headers", "component_mappings",
-                               "bugzilla_users", "gitlab_users", "gitlab_misc_user",
-                               "default_gitlab_labels", "datetime_format_string",
-                               "map_operating_system", "map_keywords", "keywords_to_skip",
-                               "map_milestones", "milestones_to_skip", "gitlab_milestones",
-                               "dry_run", "include_bugzilla_link"])
+                               "bugzilla_users", "gitlab_users", "gitlab_admins",
+                               "gitlab_misc_user", "default_gitlab_labels",
+                               "datetime_format_string", "map_operating_system", "map_keywords",
+                               "keywords_to_skip", "map_milestones", "milestones_to_skip",
+                               "gitlab_milestones", "dry_run", "include_bugzilla_link",
+                               "gitlab_temporary_admins", "preserve_bug_id"])
 
 
 def get_config(path):
@@ -53,10 +54,13 @@ def _load_user_id_cache(path, gitlab_url, gitlab_headers):
         bugzilla_mapping = yaml.safe_load(f)
 
     gitlab_users = {}
+    gitlab_admins = []
     for user in bugzilla_mapping:
         gitlab_username = bugzilla_mapping[user]
-        uid = _get_user_id(gitlab_username, gitlab_url, gitlab_headers)
+        uid, is_admin = _get_user(gitlab_username, gitlab_url, gitlab_headers)
         gitlab_users[gitlab_username] = str(uid)
+        if is_admin:
+            gitlab_admins.append(str(uid))
 
     mappings = {}
     # bugzilla_username: gitlab_username
@@ -64,6 +68,8 @@ def _load_user_id_cache(path, gitlab_url, gitlab_headers):
 
     # gitlab_username: gitlab_userid
     mappings["gitlab_users"] = gitlab_users
+
+    mappings["gitlab_admins"] = gitlab_admins
 
     return mappings
 
@@ -84,11 +90,11 @@ def _load_milestone_id_cache(project_id, gitlab_url, gitlab_headers):
     return {"gitlab_milestones": gitlab_milestones}
 
 
-def _get_user_id(username, gitlab_url, headers):
+def _get_user(username, gitlab_url, headers):
     url = "{}/users?username={}".format(gitlab_url, username)
     result = _perform_request(url, "get", headers=headers)
     if result and isinstance(result, list):
-        return result[0]["id"]
+        return result[0]["id"], result[0]["is_admin"]
     else:
         raise Exception("No gitlab account found for user {}".format(username))
 

@@ -38,6 +38,13 @@ bugzilla_closed_states:
 # Generic gitLab user for misc or old bugzilla users that don't have GitLab accounts
 gitlab_misc_user: "bugzilla"
 
+# Change all users temporarily to admins before creating issues or comments to ensure 'created_at' dates are correct.
+gitlab_temporary_admins: false
+
+# Set the issue id from the original bug ID. Note this will only work if you do not have conflicting IDs
+#  i.e. you are migrating to an empty project. It also requires gitlab_temporary_admins to work.
+preserve_bug_id: false
+
 # Default label(s) to add to all migrated bugs
 # Optional
 default_gitlab_labels:

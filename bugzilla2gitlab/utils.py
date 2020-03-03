@@ -47,7 +47,7 @@ def markdown_table_row(key, value):
 
 def format_datetime(datestr, formatting):
     '''
-    Apply a dateime format to a string, according to the formatting string.
+    Apply a datetime format to a string, according to the formatting string.
     '''
     parsed_dt = dateutil.parser.parse(datestr)
     return parsed_dt.strftime(formatting)
@@ -55,7 +55,7 @@ def format_datetime(datestr, formatting):
 
 def format_utc(datestr):
     '''
-    Convert dateime string to UTC format recognized by gitlab.
+    Convert datetime string to UTC format recognized by gitlab.
     '''
     parsed_dt = dateutil.parser.parse(datestr)
     utc_dt = parsed_dt.astimezone(pytz.utc)
@@ -97,7 +97,7 @@ def _fetch_bug_content(url, bug_id):
 
 def bugzilla_login(url, user):
     '''
-    Log in to Bugzilla as user, asking for password for a few times / untill success.
+    Log in to Bugzilla as user, asking for password for a few times / until success.
     '''
     max_login_attempts = 3
     login_url = "{}/index.cgi".format(url)
@@ -132,9 +132,23 @@ def validate_list(integer_list):
         raise Exception("Expected a list of integers. Instead recieved "
                         "a(n) {}".format(type(integer_list)))
 
-        for i in integer_list:
-            try:
-                int(i)
-            except ValueError:
-                raise Exception("{} is not able to be parsed as an integer, "
-                                "and is therefore an invalid bug id.".format(i))
+    for i in integer_list:
+        try:
+            int(i)
+        except ValueError:
+            raise Exception("{} is not able to be parsed as an integer, "
+                            "and is therefore an invalid bug id.".format(i))
+
+
+def set_gitlab_admin(conf, user_id, admin_status):
+    '''
+    Change the user admin status to allow 'created_at' to be used for issue and
+    comment creation.
+    '''
+    if user_id not in conf.gitlab_admins:
+        url = "{}/users/{}".format(conf.gitlab_base_url, user_id)
+        data = {
+            "admin": admin_status
+        }
+        _perform_request(url, "put", headers=conf.default_headers,
+                         data=data, json=True, dry_run=conf.dry_run)

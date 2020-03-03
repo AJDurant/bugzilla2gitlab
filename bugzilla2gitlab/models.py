@@ -1,6 +1,7 @@
 import re
 
-from .utils import _perform_request, format_datetime, format_utc, markdown_table_row
+from .utils import _perform_request, format_datetime, format_utc, markdown_table_row, \
+    set_gitlab_admin
 
 conf = None
 
@@ -54,10 +55,10 @@ class Issue(object):
     '''
     required_fields = ["sudo", "title", "description"]
     data_fields = ["sudo", "created_at", "title", "description", "assignee_ids", "milestone_id",
-                   "labels"]
+                   "labels", "iid"]
 
     def __init__(self, bugzilla_fields):
-        self.headers = conf.default_headers
+        self.headers = conf.default_headers.copy()
         validate_user(bugzilla_fields["reporter"])
         validate_user(bugzilla_fields["assigned_to"])
         self.load_fields(bugzilla_fields)
@@ -67,12 +68,15 @@ class Issue(object):
         self.sudo = conf.gitlab_users[conf.bugzilla_users[fields["reporter"]]]
         self.assignee_ids = [conf.gitlab_users[conf.bugzilla_users[fields["assigned_to"]]]]
         self.created_at = format_utc(fields["creation_ts"])
+        self.last_change = format_utc(fields["delta_ts"])
         self.status = fields["bug_status"]
         self.create_labels(fields["component"], fields.get("op_sys"), fields.get("keywords"))
         milestone = fields["target_milestone"]
         if conf.map_milestones and milestone not in conf.milestones_to_skip:
             self.create_milestone(milestone)
         self.create_description(fields)
+        if conf.preserve_bug_id:
+            self.iid = fields["bug_id"]
 
     def create_labels(self, component, operating_system, keywords):
         '''
@@ -107,7 +111,7 @@ class Issue(object):
         if milestone not in conf.gitlab_milestones:
             url = "{}/projects/{}/milestones".format(conf.gitlab_base_url, conf.gitlab_project_id)
             response = _perform_request(
-                url, "post", headers=self.headers, data={"title": milestone})
+                url, "post", headers=self.headers, data={"title": milestone}, dry_run=conf.dry_run)
             conf.gitlab_milestones[milestone] = response["id"]
 
         self.milestone_id = conf.gitlab_milestones[milestone]
@@ -200,12 +204,19 @@ class Issue(object):
 
     def save(self):
         self.validate()
+
+        if conf.gitlab_temporary_admins:
+            set_gitlab_admin(conf, self.sudo, True)
+
         url = "{}/projects/{}/issues".format(conf.gitlab_base_url, conf.gitlab_project_id)
         data = {k: v for k, v in self.__dict__.items() if k in self.data_fields}
         self.headers["sudo"] = self.sudo
 
         response = _perform_request(url, "post", headers=self.headers, data=data, json=True,
                                     dry_run=conf.dry_run)
+
+        if conf.gitlab_temporary_admins:
+            set_gitlab_admin(conf, self.sudo, False)
 
         if conf.dry_run:
             # assign a random number so that program can continue
@@ -215,14 +226,25 @@ class Issue(object):
         self.id = response["iid"]
 
     def close(self):
+        assignee = self.assignee_ids[0]
+
+        if conf.gitlab_temporary_admins:
+            set_gitlab_admin(conf, assignee, True)
+
         url = "{}/projects/{}/issues/{}".format(conf.gitlab_base_url, conf.gitlab_project_id,
                                                 self.id)
+        # The last change is not necessarily the close date, but it is the best we can do from xml
+        # to actually set updated_at the user needs to be admin
         data = {
             "state_event": "close",
+            "updated_at": self.last_change
         }
-        self.headers["sudo"] = self.sudo
+        self.headers["sudo"] = assignee
 
         _perform_request(url, "put", headers=self.headers, data=data, dry_run=conf.dry_run)
+
+        if conf.gitlab_temporary_admins:
+            set_gitlab_admin(conf, assignee, False)
 
 
 class Comment(object):
@@ -234,7 +256,7 @@ class Comment(object):
     data_fields = ["created_at", "body"]
 
     def __init__(self, bugzilla_fields):
-        self.headers = conf.default_headers
+        self.headers = conf.default_headers.copy()
         validate_user(bugzilla_fields["who"])
         self.load_fields(bugzilla_fields)
 
@@ -267,6 +289,10 @@ class Comment(object):
 
     def save(self):
         self.validate()
+
+        if conf.gitlab_temporary_admins:
+            set_gitlab_admin(conf, self.sudo, True)
+
         self.headers["sudo"] = self.sudo
         url = "{}/projects/{}/issues/{}/notes".format(conf.gitlab_base_url, conf.gitlab_project_id,
                                                       self.issue_id)
@@ -274,6 +300,9 @@ class Comment(object):
 
         _perform_request(url, "post", headers=self.headers, data=data, json=True,
                          dry_run=conf.dry_run)
+
+        if conf.gitlab_temporary_admins:
+            set_gitlab_admin(conf, self.sudo, False)
 
 
 class Attachment(object):
