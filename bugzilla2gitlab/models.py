@@ -111,7 +111,7 @@ class Issue(object):
         if milestone not in conf.gitlab_milestones:
             url = "{}/projects/{}/milestones".format(conf.gitlab_base_url, conf.gitlab_project_id)
             response = _perform_request(
-                url, "post", headers=self.headers, data={"title": milestone}, dry_run=conf.dry_run)
+                url, "post", headers=conf.default_headers, data={"title": milestone}, dry_run=conf.dry_run)
             conf.gitlab_milestones[milestone] = response["id"]
 
         self.milestone_id = conf.gitlab_milestones[milestone]

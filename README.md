@@ -12,7 +12,7 @@
 
 ## Introduction
 
-This is a tool for developers or admins who want to migrate the issue management for their software project from Bugzilla to Gitlab Issues. Here is a screenshoot of an issue created by bugzilla2gitlab:
+This is a tool for developers or admins who want to migrate the issue management for their software project from Bugzilla to Gitlab Issues. Here is a screenshot of an issue created by bugzilla2gitlab:
 ![bugzilla2gitlab created issue](snapshot.png)
 
 bugzilla2gitlab copies over bugs, bug comments and attachments.
@@ -21,7 +21,7 @@ bugzilla2gitlab copies over bugs, bug comments and attachments.
 
 This library is very much under development. That said, if you like to feel the wind in your hair, simply `pip install bugzilla2gitlab`.
 
-More than likely, you will need to roll up your sleaves and hack on the package to achieve a migration that you are happy with. In this case:
+More than likely, you will need to roll up your sleeves and hack on the package to achieve a migration that you are happy with. In this case:
 
 ```
 git clone git@github.com:xmunoz/bugzilla2gitlab.git
@@ -33,7 +33,7 @@ pip install -r requirements.txt
 pip install .
 ```
 
-bugzilla2gitlab is compatible with python2.7, 3.4, 3.5 and 3.6.
+bugzilla2gitlab is compatible with python2.7, 3.4, 3.5, 3.6, and 3.7.
 
 ## Usage
 
@@ -75,7 +75,7 @@ To begin using bugzilla2gitlab, the following list of configuration files is req
 
 Samples of all of these files with documentation for each configuration variable can be found in `tests/test_data/config`.
 
-bugzilla2gitlab creates issues and comments in GitLab with the user accounts specified in `user_mappings.yml`, perserving the integrity of the original Bugzilla commenter. This, however, may not always be possible. In [tests/test_data/config/user_mappings.yml](tests/test_data/config/user_mappings.yml), users with the designation "bugzilla" may have left the organization and therefore not have current GitLab accounts, or might simply be machine users. Comments for such users will be left under a generic "bugzilla" account. bugzilla2gitlab doesn't create any new user accounts. All of the accounts specified in `user_mappings.yml` must already exist in your GitLab installation.
+bugzilla2gitlab creates issues and comments in GitLab with the user accounts specified in `user_mappings.yml`, preserving the integrity of the original Bugzilla commenter. This, however, may not always be possible. In [tests/test_data/config/user_mappings.yml](tests/test_data/config/user_mappings.yml), users with the designation "bugzilla" may have left the organization and therefore not have current GitLab accounts, or might simply be machine users. Comments for such users will be left under a generic "bugzilla" account. bugzilla2gitlab doesn't create any new user accounts. All of the accounts specified in `user_mappings.yml` must already exist in your GitLab installation.
 
 The default table created in the issue description by bugzilla2gitlab looks like this:
 
@@ -89,7 +89,7 @@ The default table created in the issue description by bugzilla2gitlab looks like
 | Attachments | [a_PHP_play_script_to_demonstrate_how_the_browser_requests_videos](/uploads/e521dd042dc4cfd3d49151d87dee8058/a_PHP_play_script_to_demonstrate_how_the_browser_requests_videos) |
 | Reporter | mozilla |
 
-To modify this table, take a look at `create_description` in [models.py](/bugzilla2gitlab/models.py#L92).
+To modify this table, take a look at `create_description` in [models.py](/bugzilla2gitlab/models.py#L119).
 
 ## How it works
 
