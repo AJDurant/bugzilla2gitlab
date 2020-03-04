@@ -10,14 +10,14 @@ TEST_DATA_PATH = os.path.join(os.path.dirname(__file__), "test_data")
 
 def test_config(monkeypatch):
 
-    def mockreturn(username, gitlab_url, headers):
-        return random.randint(0, 100)
+    def mock_getuser(username, gitlab_url, headers):
+        return random.randint(0, 100), False
 
     def mockmilestones(project_id, gitlab_url, headers):
         return {"gitlab_milestones": {"Foo": 1}}
 
     # monkeypatch config method that performs API calls to return a random int instead
-    monkeypatch.setattr(bugzilla2gitlab.config, '_get_user_id', mockreturn)
+    monkeypatch.setattr(bugzilla2gitlab.config, '_get_user', mock_getuser)
     monkeypatch.setattr(bugzilla2gitlab.config, '_load_milestone_id_cache', mockmilestones)
     conf = bugzilla2gitlab.config.get_config(os.path.join(TEST_DATA_PATH, "config"))
     assert isinstance(conf, bugzilla2gitlab.config.Config)
@@ -68,8 +68,8 @@ def test_config(monkeypatch):
 def test_Migrator(monkeypatch):
     bug_id = 103
 
-    def mock_getuserid(username, gitlab_url, headers):
-        return random.randint(0, 100)
+    def mock_getuser(username, gitlab_url, headers):
+        return random.randint(0, 100), False
 
     def mock_loadmilestoneidcache(project_id, gitlab_url, headers):
         return {"gitlab_milestones": {"Foo": 1}}
@@ -81,7 +81,7 @@ def test_Migrator(monkeypatch):
         return content
 
     # monkeypatch config method that performs API calls to return a random int instead
-    monkeypatch.setattr(bugzilla2gitlab.config, '_get_user_id', mock_getuserid)
+    monkeypatch.setattr(bugzilla2gitlab.config, '_get_user', mock_getuser)
     monkeypatch.setattr(bugzilla2gitlab.config, '_load_milestone_id_cache',
                         mock_loadmilestoneidcache)
     monkeypatch.setattr(bugzilla2gitlab.utils, '_fetch_bug_content', mock_fetchbugcontent)
