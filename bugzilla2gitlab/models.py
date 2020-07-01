@@ -23,7 +23,7 @@ class IssueThread(object):
         self.issue = Issue(fields)
         self.comments = []
         '''
-        fields["long_desc"] gets peared down in Issue creation (above). This is because bugzilla
+        fields["long_desc"] gets pared down in Issue creation (above). This is because bugzilla
         lacks the concept of an issue description, so the first comment is harvested for
         the issue description, as well as any subsequent comments that are simply attachments
         from the original reporter. What remains below should be a list of genuine comments.
